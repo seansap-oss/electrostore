@@ -19,6 +19,10 @@ const DEFAULTS: Record<string, string> = {
   announcement_bg: "#151515",
   announcement_text: "#FFFFFF",
   free_shipping_threshold: "9900",
+  announcement_message: "Free shipping on selected Electrostore products",
+  logo_url: "",
+  logo_dark_url: "",
+  favicon_url: "",
   currency: "AUD",
   gst_rate: "10",
   order_prefix: "EL-",
@@ -38,5 +42,6 @@ export async function getSettings(): Promise<Record<string, string>> {
 }
 
 export function themeCss(s: Record<string, string>) {
-  return `:root{--es-primary:${s.primary_color};--es-secondary:${s.secondary_color};--es-accent:${s.accent_color};--es-page:${s.page_bg};--es-soft:${s.soft_bg};--es-header:${s.header_bg};--es-footer:${s.footer_bg};--es-text:${s.text_color};--es-button:${s.button_color};--es-link:${s.link_color};--es-sale:${s.sale_badge_color};--es-radius:${s.border_radius}px;--es-font:${s.font_choice},system-ui,sans-serif}`;
+  const font = s.font_choice === "System UI" ? "system-ui" : s.font_choice;
+  return `:root{--es-primary:${s.primary_color};--es-secondary:${s.secondary_color};--es-accent:${s.accent_color};--es-page:${s.page_bg};--es-soft:${s.soft_bg};--es-header:${s.header_bg};--es-footer:${s.footer_bg};--es-text:${s.text_color};--es-button:${s.button_color};--es-link:${s.link_color};--es-sale:${s.sale_badge_color};--es-radius:${s.border_radius}px;--es-font:${font},system-ui,sans-serif}`;
 }

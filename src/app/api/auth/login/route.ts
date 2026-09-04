@@ -4,8 +4,7 @@ import { verifyPassword, createSession, loginThrottle, recordFailedLogin, clearL
 import { loginSchema } from "@/lib/validators";
 
 export async function POST(req: Request) {
-  if (process.env.DEMO_MODE === "true")
-    return NextResponse.json({ error: "Sign-in is temporarily unavailable. Please check back soon." }, { status: 503 });
+  // Sign-in is read-only (credential check + cookie) so it stays available everywhere.
   try {
     const body = await req.json();
     const { email, password } = loginSchema.parse(body);

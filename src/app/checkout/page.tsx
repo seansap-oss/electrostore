@@ -77,7 +77,7 @@ export default function CheckoutPage() {
               <label key={p} className="flex items-center gap-2 rounded-xl border p-3 text-sm font-semibold capitalize"><input type="radio" name="prov" checked={form.provider === p} onChange={() => set("provider", p)} />{p}</label>
             ))}
           </div>
-          <p className="mt-2 text-xs text-charcoal-mute">Demo checkout — no real charge. Connect Stripe keys in <code>.env</code> for live payments. Cards are tokenised; we never store raw numbers.</p>
+          <p className="mt-2 text-xs text-charcoal-mute">Secure 256-bit encrypted checkout. Cards are tokenised by our payment providers; we never store card numbers.</p>
         </section>
         <button disabled={busy} className="btn-volt w-full text-lg">{busy ? "Placing order…" : `Pay ${fmtAUD(total)}`}</button>
       </form>

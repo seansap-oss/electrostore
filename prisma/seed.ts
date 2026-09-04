@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { CATEGORIES, BRANDS, PRODUCTS } from "../src/data/catalog";
+import { photosFor, CATEGORY_PHOTOS } from "../src/data/photos";
 
 const prisma = new PrismaClient();
 
@@ -49,21 +50,35 @@ async function main() {
     });
   }
 
-  // Categories (parents first)
+  // Categories (parents first) — real photography for thumbnails + heroes
   const parents = CATEGORIES.filter((c) => !c.parent);
   const children = CATEGORIES.filter((c) => c.parent);
   for (const c of [...parents, ...children]) {
     const parent = c.parent ? await prisma.category.findUnique({ where: { slug: c.parent } }) : null;
+    const art = photosFor(c.slug)[0];
     await prisma.category.upsert({
       where: { slug: c.slug },
-      update: { title: c.title, description: c.description, thumbnail: `/images/cats/${c.slug}.svg`, heroImage: `/images/cats/${c.slug}.svg`, showOnHome: !!c.showOnHome, status: "active" },
-      create: { title: c.title, slug: c.slug, description: c.description, thumbnail: `/images/cats/${c.slug}.svg`, heroImage: `/images/cats/${c.slug}.svg`, parentId: parent?.id ?? null, showOnHome: !!c.showOnHome, status: "active" }
+      update: { title: c.title, description: c.description, thumbnail: art, heroImage: art, showOnHome: !!c.showOnHome, status: "active" },
+      create: { title: c.title, slug: c.slug, description: c.description, thumbnail: art, heroImage: art, parentId: parent?.id ?? null, showOnHome: !!c.showOnHome, status: "active" }
     });
   }
 
-  // Products
+  // Media library — every curated photo registered so admins can reuse,
+  // rename, check usage and delete with warnings.
+  for (const [slug, urls] of Object.entries(CATEGORY_PHOTOS)) {
+    let n = 0;
+    for (const url of urls) {
+      n += 1;
+      const name = `${slug} — photo ${n}`;
+      const ex = await prisma.media.findFirst({ where: { url } });
+      if (!ex) await prisma.media.create({ data: { url, name, mime: "image/jpeg", folder: "catalog" } });
+    }
+  }
+
+  // Products — each gets real photos from its category pool (primary + alternate)
   let featured = 0;
-  for (const p of PRODUCTS) {
+  for (let pi = 0; pi < PRODUCTS.length; pi++) {
+    const p = PRODUCTS[pi];
     const brand = await prisma.brand.findUnique({ where: { slug: p.brand } });
     const cat = await prisma.category.findUnique({ where: { slug: p.category } });
     const data = {
@@ -79,9 +94,14 @@ async function main() {
     };
     const prod = await prisma.product.upsert({ where: { slug: p.slug }, update: data, create: data as never });
     if (cat) await prisma.productCategory.upsert({ where: { productId_categoryId: { productId: prod.id, categoryId: cat.id } }, update: {}, create: { productId: prod.id, categoryId: cat.id } });
-    const imgUrl = `/images/cats/${p.category}.svg`;
+    const pool = photosFor(p.category);
+    const primary = pool[pi % pool.length];
+    const alternate = pool.length > 1 ? pool[(pi + 1) % pool.length] : null;
     const existing = await prisma.productImage.findFirst({ where: { productId: prod.id } });
-    if (!existing) await prisma.productImage.create({ data: { productId: prod.id, url: imgUrl, alt: p.title, sortOrder: 0 } });
+    if (!existing) {
+      await prisma.productImage.create({ data: { productId: prod.id, url: primary, alt: p.title, sortOrder: 0 } });
+      if (alternate && alternate !== primary) await prisma.productImage.create({ data: { productId: prod.id, url: alternate, alt: `${p.title} — alternate view`, sortOrder: 1 } });
+    }
     if (mel) {
       await prisma.inventory.upsert({
         where: { productId_warehouseId: { productId: prod.id, warehouseId: mel.id } },
@@ -98,7 +118,7 @@ async function main() {
 
   // Homepage sections
   const sections = [
-    { kind: "hero", title: "Hero campaign", config: JSON.stringify({ headline: "Upgrade Your Everyday", body: "Smart technology, powerful appliances and everyday essentials at great prices.", cta: "Shop Hot Deals", url: "/search?q=deals", cta2: "Explore Kitchen", url2: "/category/kitchen" }), sortOrder: 0, enabled: true },
+    { kind: "hero", title: "Hero campaign", config: JSON.stringify({ badge: "Weekend Tech Sale", headline: "Upgrade Your Everyday", body: "Smart technology, powerful appliances and everyday essentials at great prices.", cta: "Shop Hot Deals", url: "/search?q=sale", cta2: "Explore Kitchen", url2: "/category/kitchen", image1: "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=900&q=70", image2: "https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=900&q=70" }), sortOrder: 0, enabled: true },
     { kind: "benefits", title: "Service benefits", config: "{}", sortOrder: 1, enabled: true },
     { kind: "categories", title: "Shop by category", config: "{}", sortOrder: 2, enabled: true },
     { kind: "deals", title: "Today's Hot Deals", config: JSON.stringify({ filter: "sale", limit: 12 }), sortOrder: 3, enabled: true },

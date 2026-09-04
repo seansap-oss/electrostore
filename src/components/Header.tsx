@@ -18,7 +18,7 @@ const NAV = [
   { label: "Clearance", url: "/search?q=clearance" }
 ];
 
-export function Header({ announcements }: { announcements: { label: string; url: string }[] }) {
+export function Header({ announcements, logoUrl, storeName }: { announcements: { label: string; url: string }[]; logoUrl?: string; storeName?: string }) {
   const [q, setQ] = useState("");
   const [sugs, setSugs] = useState<{ slug: string; title: string; price: number; image?: string }[]>([]);
   const [open, setOpen] = useState(false);
@@ -44,7 +44,12 @@ export function Header({ announcements }: { announcements: { label: string; url:
       <div className="border-b bg-white">
         <div className="container-es flex h-16 items-center gap-3">
           <button className="rounded-lg p-2 lg:hidden" aria-label="Open menu" onClick={() => setDrawer(true)}>☰</button>
-          <Link href="/" aria-label="Electrostore home"><ElectroLogo /></Link>
+          <Link href="/" aria-label={`${storeName ?? "Electrostore"} home`}>
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt={storeName ?? "Electrostore"} className="h-9 max-w-[180px] object-contain" />
+            ) : (<ElectroLogo />)}
+          </Link>
           <form action="/search" method="get" className="relative mx-auto hidden w-full max-w-xl flex-1 md:block" role="search">
             <input name="q" value={q} onChange={(e) => { setQ(e.target.value); setOpen(true); }} onBlur={() => setTimeout(() => setOpen(false), 150)}
               placeholder="Search Electrostore" aria-label="Search Electrostore" autoComplete="off"
@@ -90,7 +95,10 @@ export function Header({ announcements }: { announcements: { label: string; url:
           <div className="absolute inset-0 bg-black/50" onClick={() => setDrawer(false)} />
           <div className="absolute left-0 top-0 h-full w-80 max-w-[85vw] overflow-y-auto bg-white p-4">
             <div className="mb-3 flex items-center justify-between">
-              <ElectroLogo compact />
+              {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logoUrl} alt={storeName ?? "Electrostore"} className="h-8 max-w-[160px] object-contain" />
+              ) : (<ElectroLogo compact />)}
               <button aria-label="Close menu" className="rounded-lg p-2" onClick={() => setDrawer(false)}>✕</button>
             </div>
             {NAV.map((n) => (

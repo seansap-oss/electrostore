@@ -2,6 +2,7 @@ import Link from "next/link";
 import prisma from "@/lib/db";
 import { ProductCard } from "@/components/ProductCard";
 import { PRODUCTS, CATEGORIES, BRANDS } from "@/data/catalog";
+import { photosFor, HERO_PHOTOS } from "@/data/photos";
 import { effectivePrice } from "@/lib/pricing";
 
 type P = { slug: string; title: string; brand?: string | null; price: number; salePrice?: number | null; compareAtPrice?: number | null; ratingAvg?: number; ratingCount?: number; image?: string; bestSeller?: boolean; isNew?: boolean; clearance?: boolean; stock?: number };
@@ -28,7 +29,7 @@ async function getHome(): Promise<{ deals: P[]; kitchen: P[]; smart: P[]; tv: P[
       fresh: all.filter((_, i) => rows[i].isNew).concat(all.slice(0, 12)).slice(0, 12)
     };
   } catch {
-    const img = (slug: string, cat: string) => `/images/cats/${cat}.svg`;
+    const img = (_slug: string, cat: string) => photosFor(cat)[0];
     const brandName = (s: string) => BRANDS.find((b) => b.slug === s)?.name ?? s;
     const base: P[] = PRODUCTS.map((p) => ({ slug: p.slug, title: p.title, brand: brandName(p.brand), price: p.price, salePrice: p.sale ?? null, compareAtPrice: p.compareAt, ratingAvg: 4.5, ratingCount: 87, image: img(p.slug, p.category), bestSeller: p.best, isNew: p.isNew, clearance: p.clearance, stock: p.stock }));
     const byCat = (c: string) => base.filter((_, i) => PRODUCTS[i].category === c || PRODUCTS[i].category.startsWith(c));
@@ -45,8 +46,33 @@ async function getHome(): Promise<{ deals: P[]; kitchen: P[]; smart: P[]; tv: P[
   }
 }
 
-function Rail({ title, sub, items, href }: { title: string; sub?: string; items: P[]; href: string }) {
-  if (!items.length) return null;
+async function getHero() {
+  const fallback = {
+    badge: "Weekend Tech Sale",
+    headlineA: "Upgrade Your", headlineB: "Everyday",
+    body: "Smart technology, powerful appliances and everyday essentials at great prices.",
+    cta: "Shop Hot Deals", url: "/search?q=sale",
+    cta2: "Explore Kitchen", url2: "/category/kitchen",
+    image1: HERO_PHOTOS.livingRoom, image2: HERO_PHOTOS.kitchen
+  };
+  try {
+    const row = await prisma.homepageSection.findFirst({ where: { kind: "hero", enabled: true } });
+    if (!row) return fallback;
+    const c = JSON.parse(row.config) as Record<string, string>;
+    const words = (c.headline ?? `${fallback.headlineA} ${fallback.headlineB}`).split(" ");
+    const split = Math.ceil(words.length / 2);
+    return {
+      badge: c.badge || fallback.badge,
+      headlineA: words.slice(0, split).join(" "), headlineB: words.slice(split).join(" "),
+      body: c.body || fallback.body,
+      cta: c.cta || fallback.cta, url: c.url || fallback.url,
+      cta2: c.cta2 || fallback.cta2, url2: c.url2 || fallback.url2,
+      image1: c.image1 || fallback.image1, image2: c.image2 || fallback.image2
+    };
+  } catch { return fallback; }
+}
+
+function Rail({ title, sub, items, href }: { title: string; sub?: string; items: P[]; href: string }) {  if (!items.length) return null;
   return (
     <section className="container-es py-8" aria-label={title}>
       <div className="mb-4 flex items-end justify-between">
@@ -62,6 +88,7 @@ function Rail({ title, sub, items, href }: { title: string; sub?: string; items:
 
 export default async function Home() {
   const d = await getHome();
+  const hero = await getHero();
   const featCats = CATEGORIES.filter((c) => !c.parent).slice(0, 8);
   return (
     <>
@@ -69,12 +96,12 @@ export default async function Home() {
       <section className="relative overflow-hidden bg-charcoal text-white" aria-label="Featured campaign">
         <div className="container-es grid items-center gap-6 py-12 md:grid-cols-2 md:py-20">
           <div>
-            <span className="chip !bg-volt !text-charcoal">Weekend Tech Sale</span>
-            <h1 className="mt-3 text-4xl font-extrabold leading-tight md:text-6xl">Upgrade Your <span className="text-volt">Everyday</span></h1>
-            <p className="mt-3 max-w-md text-white/75">Smart technology, powerful appliances and everyday essentials at great prices.</p>
+            <span className="chip !bg-volt !text-charcoal">{hero.badge}</span>
+            <h1 className="mt-3 text-4xl font-extrabold leading-tight md:text-6xl">{hero.headlineA} <span className="text-volt">{hero.headlineB}</span></h1>
+            <p className="mt-3 max-w-md text-white/75">{hero.body}</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/search?q=sale" className="btn-volt">Shop Hot Deals</Link>
-              <Link href="/category/kitchen" className="rounded-xl border border-white/30 px-5 py-3 font-semibold hover:bg-white/10">Explore Kitchen</Link>
+              <Link href={hero.url} className="btn-volt">{hero.cta}</Link>
+              <Link href={hero.url2} className="rounded-xl border border-white/30 px-5 py-3 font-semibold hover:bg-white/10">{hero.cta2}</Link>
             </div>
             <div className="mt-6 flex gap-4 text-xs text-white/70">
               <span>✓ Free shipping over $99*</span><span>✓ Local warranty</span><span>✓ 30-day returns*</span>
@@ -82,9 +109,9 @@ export default async function Home() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/cats/smart-tvs.svg" alt="Big-screen TVs" className="rounded-2xl" />
+            <img src={hero.image1} alt="Featured Electrostore range" className="rounded-2xl object-cover aspect-[4/3]" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/cats/air-fryers.svg" alt="Kitchen air fryers" className="mt-6 rounded-2xl" />
+            <img src={hero.image2} alt="Featured Electrostore range" className="mt-6 rounded-2xl object-cover aspect-[4/3]" />
           </div>
         </div>
       </section>
@@ -105,7 +132,7 @@ export default async function Home() {
           {featCats.map((c) => (
             <Link key={c.slug} href={`/category/${c.slug}`} className="group rounded-2xl border bg-white p-3 text-center shadow-card hover:shadow-pop">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/images/cats/${c.slug}.svg`} alt="" loading="lazy" className="mx-auto aspect-square w-full max-w-[96px] object-contain" />
+              <img src={photosFor(c.slug)[0]} alt="" loading="lazy" className="mx-auto aspect-square w-full max-w-[96px] rounded-xl object-cover" />
               <div className="mt-2 text-xs font-bold leading-tight">{c.title}</div>
             </Link>
           ))}
@@ -117,10 +144,10 @@ export default async function Home() {
       {/* PROMO TILES */}
       <section className="container-es grid gap-3 md:grid-cols-2 xl:grid-cols-4" aria-label="Promotions">
         {[
-          ["Kitchen Upgrade", "Air fryers, coffee machines & cookware.", "/category/kitchen", "/images/cats/air-fryers.svg"],
-          ["Smart Home Sale", "Security, lighting & automation.", "/category/smart-home", "/images/cats/smart-home.svg"],
-          ["Big Screen Weekend", "TVs, projectors & soundbars.", "/category/tv-audio", "/images/cats/smart-tvs.svg"],
-          ["Work Anywhere", "Laptops, monitors & accessories.", "/category/computers", "/images/cats/laptops.svg"]
+          ["Kitchen Upgrade", "Air fryers, coffee machines & cookware.", "/category/kitchen", photosFor("air-fryers")[0]],
+          ["Smart Home Sale", "Security, lighting & automation.", "/category/smart-home", photosFor("smart-home")[0]],
+          ["Big Screen Weekend", "TVs, projectors & soundbars.", "/category/tv-audio", photosFor("smart-tvs")[0]],
+          ["Work Anywhere", "Laptops, monitors & accessories.", "/category/computers", photosFor("laptops")[0]]
         ].map(([t, s, u, img]) => (
           <Link key={t} href={u} className="card group overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -8,6 +8,8 @@ const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/avif", 
 export async function POST(req: Request) {
   const s = await getSession();
   if (!s || !isStaffRole(s.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (process.env.DEMO_MODE === "true")
+    return NextResponse.json({ error: "Uploads are disabled on the live preview site — files cannot be saved without a production database." }, { status: 503 });
   const fd = await req.formData();
   const file = fd.get("file") as File | null;
   if (!file) return NextResponse.json({ error: "No file." }, { status: 400 });

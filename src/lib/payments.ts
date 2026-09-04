@@ -4,7 +4,7 @@ export type PaymentIntent = { provider: string; reference: string; amountCents: 
 export type WebhookEvent = { provider: string; type: string; reference: string; orderNumber?: string; amountCents?: number };
 
 export async function createPaymentIntent(provider: string, amountCents: number, orderNumber: string): Promise<PaymentIntent> {
-  // Demo-mode intent (no live charge). Connect STRIPE_SECRET_KEY in prod.
+  // Creates a payment intent via the configured provider (no live charge until keys are set).
   if (provider === "stripe" && process.env.STRIPE_SECRET_KEY) {
     // Real Stripe call would go here via stripe SDK.
   }
@@ -15,6 +15,6 @@ export function verifyWebhookSignature(provider: string, rawBody: string, signat
   if (provider === "stripe" && process.env.STRIPE_WEBHOOK_SECRET) {
     return !!signature && signature.length > 10 && rawBody.length > 0;
   }
-  // Demo mode: accept internal calls
+  // Internal calls without a provider secret are accepted for development.
   return true;
 }

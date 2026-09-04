@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ElectroLogo } from "./Logo";
 
-export function Footer({ socials }: { socials?: { label: string; url: string }[] }) {
+export function Footer({ socials, logoUrl, storeName, tagline }: { socials?: { label: string; url: string }[]; logoUrl?: string; storeName?: string; tagline?: string }) {
   const cols: { h: string; links: { label: string; url: string }[] }[] = [
     { h: "Shop", links: [{ label: "Appliances", url: "/category/appliances" }, { label: "Kitchen", url: "/category/kitchen" }, { label: "TVs", url: "/category/tv-audio" }, { label: "Computers", url: "/category/computers" }, { label: "Phones", url: "/category/phones" }, { label: "Gaming", url: "/category/gaming" }] },
     { h: "Customer Service", links: [{ label: "Contact", url: "/contact" }, { label: "Delivery", url: "/page/shipping" }, { label: "Returns", url: "/page/returns" }, { label: "Warranty", url: "/page/warranty" }, { label: "FAQs", url: "/page/faq" }, { label: "Order Tracking", url: "/account/orders" }] },
@@ -12,8 +12,11 @@ export function Footer({ socials }: { socials?: { label: string; url: string }[]
     <footer className="mt-12 text-white" style={{ background: "var(--es-footer, #151515)" }}>
       <div className="container-es grid gap-8 py-12 sm:grid-cols-2 lg:grid-cols-5">
         <div>
-          <ElectroLogo variant="light" />
-          <p className="mt-3 text-sm text-white/70">Technology • Appliances • Home • Everyday.<br />Powering Your Everyday.</p>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt={storeName ?? "Electrostore"} className="h-9 max-w-[200px] object-contain" />
+          ) : (<ElectroLogo variant="light" />)}
+          <p className="mt-3 text-sm text-white/70">Technology • Appliances • Home • Everyday.<br />{tagline ?? "Powering Your Everyday."}</p>
           <p className="mt-3 text-sm text-white/70">1300 000 000<br />support@electrostore.com.au</p>
           <div className="mt-3 flex gap-2 text-xs">
             {(socials?.length ? socials : [{ label: "Facebook", url: "#" }, { label: "Instagram", url: "#" }, { label: "YouTube", url: "#" }, { label: "TikTok", url: "#" }]).map((s) => (
@@ -32,7 +35,7 @@ export function Footer({ socials }: { socials?: { label: string; url: string }[]
       </div>
       <div className="border-t border-white/10">
         <div className="container-es flex flex-col items-center justify-between gap-2 py-4 text-xs text-white/60 sm:flex-row">
-          <span>© {new Date().getFullYear()} Electrostore Pty Ltd. All rights reserved. Prices include GST.</span>
+          <span>© {new Date().getFullYear()} {storeName ?? "Electrostore"} Pty Ltd. All rights reserved. Prices include GST.</span>
           <span>VISA • Mastercard • AMEX • PayPal • Apple Pay • Google Pay • Afterpay</span>
         </div>
       </div>

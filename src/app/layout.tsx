@@ -6,14 +6,21 @@ import { Toasts } from "@/components/Toasts";
 import { getSettings, themeCss } from "@/lib/settings";
 import prisma from "@/lib/db";
 
-export const metadata: Metadata = {
-  title: { default: "Electrostore — Smart Tech, Appliances & Home Essentials", template: "%s | Electrostore" },
-  description: "Smart technology, powerful appliances and everyday essentials at great prices. Free shipping over $99 on eligible products.",
-  manifest: "/manifest.webmanifest",
-  icons: { icon: "/icons/icon.svg", apple: "/icons/icon.svg" },
-  openGraph: { type: "website", siteName: "Electrostore", title: "Electrostore", description: "Powering Your Everyday" },
-  twitter: { card: "summary_large_image" }
-};
+export async function generateMetadata(): Promise<Metadata> {
+  let icon = "/icons/icon.svg";
+  try {
+    const st = await getSettings();
+    if (st.favicon_url) icon = st.favicon_url;
+  } catch { /* default icon */ }
+  return {
+    title: { default: "Electrostore — Smart Tech, Appliances & Home Essentials", template: "%s | Electrostore" },
+    description: "Smart technology, powerful appliances and everyday essentials at great prices. Free shipping over $99 on eligible products.",
+    manifest: "/manifest.webmanifest",
+    icons: { icon, apple: icon },
+    openGraph: { type: "website", siteName: "Electrostore", title: "Electrostore", description: "Powering Your Everyday" },
+    twitter: { card: "summary_large_image" }
+  };
+}
 export const viewport: Viewport = { themeColor: "#151515", width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 async function chrome() {
@@ -22,7 +29,9 @@ async function chrome() {
       prisma.navigationItem.findMany({ where: { menu: "announcement", enabled: true }, orderBy: { sortOrder: "asc" }, take: 5 }),
       getSettings()
     ]);
-    return { ann: ann.map((a) => ({ label: a.label, url: a.url })), settings };
+    const items = ann.map((a) => ({ label: a.label, url: a.url }));
+    if (!items.length && settings.announcement_message) items.push({ label: settings.announcement_message, url: "/" });
+    return { ann: items, settings };
   } catch {
     return { ann: [{ label: "Free shipping on selected Electrostore products", url: "/search?q=shipping" }], settings: null as never };
   }
@@ -35,9 +44,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>{settings && <style dangerouslySetInnerHTML={{ __html: themeCss(settings) }} />}</head>
       <body>
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:bg-volt focus:p-2">Skip to content</a>
-        <Header announcements={ann} />
+        <Header announcements={ann} logoUrl={settings?.logo_url} storeName={settings?.store_name} />
         <main id="main" className="min-h-[60vh]">{children}</main>
-        <Footer />
+        <Footer logoUrl={settings?.logo_dark_url || settings?.logo_url} storeName={settings?.store_name} tagline={settings?.tagline} />
         <Toasts />
         <MobileNav />
         <script dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{})})}` }} />

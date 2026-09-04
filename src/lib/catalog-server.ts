@@ -1,5 +1,6 @@
 import prisma from "@/lib/db";
 import { PRODUCTS, BRANDS, CATEGORIES } from "@/data/catalog";
+import { photosFor } from "@/data/photos";
 
 export type CardP = {
   slug: string; title: string; brand?: string | null; price: number;
@@ -12,13 +13,16 @@ export type CardP = {
 const bName = (s: string) => BRANDS.find((b) => b.slug === s)?.name ?? s;
 
 export function fallbackCards(): CardP[] {
-  return PRODUCTS.map((p) => ({
-    slug: p.slug, title: p.title, brand: bName(p.brand), price: p.price,
-    salePrice: p.sale ?? null, compareAtPrice: p.compareAt ?? null,
-    ratingAvg: 4.5, ratingCount: 40 + (p.title.length % 120),
-    image: `/images/cats/${p.category}.svg`,
-    bestSeller: p.best, isNew: p.isNew, clearance: p.clearance, stock: p.stock, short: p.short
-  }));
+  return PRODUCTS.map((p, i) => {
+    const pool = photosFor(p.category);
+    return {
+      slug: p.slug, title: p.title, brand: bName(p.brand), price: p.price,
+      salePrice: p.sale ?? null, compareAtPrice: p.compareAt ?? null,
+      ratingAvg: 4.5, ratingCount: 40 + (p.title.length % 120),
+      image: pool[i % pool.length],
+      bestSeller: p.best, isNew: p.isNew, clearance: p.clearance, stock: p.stock, short: p.short
+    };
+  });
 }
 
 export async function allCards(): Promise<CardP[]> {
@@ -46,7 +50,7 @@ export function fallbackProduct(slug: string) {
     slug: p.slug, title: p.title, sku: p.sku, brand: bName(p.brand), brandSlug: p.brand,
     price: p.price, salePrice: p.sale ?? null, compareAtPrice: p.compareAt ?? null,
     stock: p.stock, short: p.short, desc: p.desc,
-    image: `/images/cats/${p.category}.svg`, category: cat?.title ?? "Shop",
+    image: photosFor(p.category)[0], category: cat?.title ?? "Shop",
     categorySlug: p.category, ratingAvg: 4.6, ratingCount: 132
   };
 }
