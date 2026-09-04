@@ -9,6 +9,8 @@ import { z } from "zod";
 const lineSchema = z.object({ slug: z.string(), qty: z.number().int().min(1).max(99), variant: z.string().optional() });
 
 export async function POST(req: Request) {
+  if (process.env.DEMO_MODE === "true")
+    return NextResponse.json({ error: "Checkout is temporarily unavailable. Please try again later." }, { status: 503 });
   try {
     const session = await getSession();
     const body = await req.json();
