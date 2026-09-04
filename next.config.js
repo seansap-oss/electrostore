@@ -2,12 +2,24 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    // Bundle the read-only demo catalog DB into serverless functions
+    outputFileTracingIncludes: {
+      "/api/**/*": ["./prisma/seed-demo.db"],
+      "/admin/**/*": ["./prisma/seed-demo.db"],
+      "/account/**/*": ["./prisma/seed-demo.db"],
+      "/search": ["./prisma/seed-demo.db"],
+      "/category/*": ["./prisma/seed-demo.db"],
+      "/brand/*": ["./prisma/seed-demo.db"],
+      "/product/*": ["./prisma/seed-demo.db"],
+      "/checkout*": ["./prisma/seed-demo.db"]
+    }
+  },
   images: {
     remotePatterns: [],
     formats: ["image/avif", "image/webp"]
   },
-  async headers() {
-    return [
+  async headers() {    return [
       {
         source: "/(.*)",
         headers: [
