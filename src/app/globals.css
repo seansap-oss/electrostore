@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+html { scroll-behavior: smooth; }
+body { @apply bg-white text-charcoal antialiased; font-family: var(--es-font, Inter, system-ui, sans-serif); }
+
+.container-es { @apply mx-auto w-full max-w-[1280px] px-4 sm:px-6; }
+.btn-volt { @apply inline-flex items-center justify-center gap-2 rounded-xl bg-volt px-5 py-3 font-semibold text-charcoal shadow-card transition hover:bg-volt-dark active:scale-[.99] min-h-[44px]; }
+.btn-dark { @apply inline-flex items-center justify-center gap-2 rounded-xl bg-charcoal px-5 py-3 font-semibold text-white transition hover:bg-charcoal-soft min-h-[44px]; }
+.btn-ghost { @apply inline-flex items-center justify-center gap-2 rounded-xl border border-black/15 px-5 py-3 font-semibold min-h-[44px] hover:bg-mist; }
+.card { @apply rounded-2xl border border-black/10 bg-white shadow-card; }
+.input { @apply w-full rounded-xl border border-black/15 bg-white px-4 py-3 min-h-[44px] outline-none focus:border-info focus:ring-2 focus:ring-info/20; }
+.label { @apply mb-1 block text-sm font-medium; }
+.badge-sale { @apply rounded-md px-2 py-0.5 text-xs font-bold text-white; background: var(--es-sale, #D92D20); }
+.chip { @apply rounded-full bg-mist px-3 py-1 text-xs font-semibold; }
+.table-es { @apply w-full text-sm; }
+.table-es th { @apply text-left font-semibold text-charcoal-mute border-b p-3; }
+.table-es td { @apply border-b border-black/5 p-3 align-middle; }
+.skeleton { @apply animate-pulse rounded-xl bg-black/10; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
