@@ -8,7 +8,7 @@ type P = { slug: string; title: string; brand?: string | null; price: number; sa
 
 async function getHome(): Promise<{ deals: P[]; kitchen: P[]; smart: P[]; tv: P[]; computing: P[]; mobile: P[]; major: P[]; fresh: P[] }> {
   try {
-    const rows = await prisma.product.findMany({ where: { status: "active", deletedAt: null }, include: { images: { take: 1 }, brand: true, categories: { include: { category: true } } }, take: 200 });
+    const rows = await prisma.product.findMany({ where: { status: "active", deletedAt: null }, include: { images: { take: 1 }, brand: true, categories: { include: { category: { include: { parent: true } } } } }, take: 200 });
     const map = (r: (typeof rows)[number]): P => ({
       slug: r.slug, title: r.title, brand: r.brand?.name, price: r.price,
       salePrice: r.salePrice, compareAtPrice: r.compareAtPrice,
@@ -16,7 +16,7 @@ async function getHome(): Promise<{ deals: P[]; kitchen: P[]; smart: P[]; tv: P[
       image: r.images[0]?.url, bestSeller: r.bestSeller, isNew: r.isNew, clearance: r.clearance, stock: r.stock
     });
     const all = rows.map(map);
-    const inCat = (slug: string) => rows.filter((r) => r.categories.some((c) => c.category.slug === slug || c.category.parentId)).map(map);
+    const inCat = (slug: string) => rows.filter((r) => r.categories.some((c) => c.category.slug === slug || c.category.parent?.slug === slug)).map(map);
     return {
       deals: all.filter((_, i) => { const r = rows[i]; const s = r.salePrice ?? 0; return r.compareAtPrice != null || (s > 0 && s < r.price); }).slice(0, 12),
       kitchen: inCat("kitchen").slice(0, 12),
