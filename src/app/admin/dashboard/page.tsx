@@ -13,7 +13,7 @@ export default async function Dashboard() {
   let stats = { revenue: 0, orders: 0, products: 0, customers: 0, low: 0, out: 0, pending: 0 };
   let recent: { orderNumber: string; total: number; status: string; createdAt: Date }[] = [];
   try {
-    const [orders, products, customers, low, out, pending] = await Promise.all([
+    const [orders, products, customers, low, out, pending, recentOrders] = await Promise.all([
       prisma.order.findMany({ where: { createdAt: { gte: new Date(new Date().setDate(1)) } }, select: { total: true } }),
       prisma.product.count({ where: { deletedAt: null } }),
       prisma.user.count({ where: { role: "customer" } }),
@@ -24,7 +24,7 @@ export default async function Dashboard() {
     ]);
     const rev = orders.reduce((a, o) => a + o.total, 0);
     stats = { revenue: rev, orders: orders.length, products, customers, low, out, pending };
-    recent = pending as never;
+    recent = recentOrders as never;
   } catch { /* empty DB during first build */ }
   const cards: [string, string, string][] = [
     ["Revenue (month)", fmtAUD(stats.revenue), "success"],
